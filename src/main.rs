@@ -2,6 +2,7 @@ use std::{
     env,
     fs::{self, OpenOptions},
     io::{Result, Write},
+    path::Path,
     process,
 };
 
@@ -41,79 +42,82 @@ fn run(args: &[String]) {
 }
 
 fn process(file: &mut String, filename: &str) {
+    if !Path::new("./dist/").is_dir() {
+        fs::create_dir("./dist/").unwrap();
+    }
     let name = filename.strip_suffix(".txt").unwrap();
-    let name = &(name.to_owned() + ".html");
+    let name = &("./dist/".to_owned() + name + ".html");
 
     let mut html = OpenOptions::new()
         .write(true)
-        .append(true)
         .create(true)
+        .truncate(true)
         .open(name)
         .unwrap();
-
-    // let mut num_of_emp: u8 = 0;
-    // let mut line_content = String::new();
 
     let vec_lines: Vec<&str> = file.lines().into_iter().collect();
     let mut line = String::new();
 
-    if vec_lines[1].is_empty() && vec_lines[2].is_empty() && !vec_lines[0].is_empty() {
-        line = "<title>".to_owned() + vec_lines[0] + "</title>";
+    let default_content = "<!doctype html>
+<html lang=\"en\">
+<head>
+\t<meta charset=\"utf-8\">";
 
-        html.write_all(line.as_bytes())
-            .expect("Could not write to file");
+    html.write_all(default_content.as_bytes()).unwrap();
+
+    if vec_lines[1].is_empty() && vec_lines[2].is_empty() && !vec_lines[0].is_empty() {
+        let default_content = &("\n\t<title>".to_owned() + vec_lines[0] + "</title>");
+        html.write_all(default_content.as_bytes()).unwrap();
+
+        let default_content = "
+\t<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">
+</head>
+<body>\n";
+
+        html.write_all(default_content.as_bytes()).unwrap();
+        html.write_all(("\t<h1>".to_owned() + vec_lines[0] + "</h1>\n\n").as_bytes())
+            .unwrap();
 
         vec_lines.into_iter().skip(3).for_each(|curr_line| {
             if !curr_line.is_empty() {
-                line = "<p>".to_owned() + curr_line + "</p>";
+                line = "\t<p>".to_owned() + curr_line + "</p>\n";
                 html.write_all(line.as_bytes())
                     .expect("Could not write to file");
             } else {
-                html.write_all("\n\n".as_bytes())
+                html.write_all("\n".as_bytes())
                     .expect("Could not write to file");
             }
-        })
+        });
     } else {
+        html.write_all(default_content.as_bytes()).unwrap();
+        let default_content =
+            &("\n\t<title>".to_owned() + name.strip_prefix("./dist/").unwrap() + "</title>");
+        html.write_all(default_content.as_bytes()).unwrap();
+
+        let default_content = "
+\t<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">
+</head>
+<body>\n";
+
+        html.write_all(default_content.as_bytes()).unwrap();
+
         vec_lines.into_iter().for_each(|curr_line| {
             if !curr_line.is_empty() {
-                line = "<p>".to_owned() + curr_line + "</p>";
+                line = "\t<p>".to_owned() + curr_line + "</p>\n";
                 html.write_all(line.as_bytes())
                     .expect("Could not write to file");
             } else {
-                html.write_all("\n\n".as_bytes())
+                html.write_all("\n".as_bytes())
                     .expect("Could not write to file");
             }
-        })
+        });
     }
 
-    //     file.lines().into_iter().for_each(|line| {
-    //         //Store line with content count num of empty lines between content and modify prev content as needed
-    //         if !line.is_empty() {
-    //             if num_of_emp == 1 {
-    //                 num_of_emp = 0;
-    //                 line_content = "<p>".to_owned() + &line_content + "</p>";
-    //                 //write content to new file in place instead of storing in vec to join then write
-    //                 html.write_all(line_content.as_bytes())
-    //                     .expect("Could not write to file");
+    let default_content = "
+</body>
+</html>";
 
-    //                 line_content = String::new();
-    //             } else if num_of_emp == 2 {
-    //                 num_of_emp = 0;
-    //                 line_content = "<title>".to_owned() + &line_content + "</title>";
-    //                 //write content to new file in place instead of storing in vec to join then write
-    //                 html.write_all(line_content.as_bytes())
-    //                     .expect("Could not write to file");
-
-    //                 line_content = String::new();
-    //             } else {
-    //                 line_content = line.to_owned();
-    //             }
-    //         } else {
-    //             num_of_emp += 1;
-    //             html.write_all("\n".as_bytes())
-    //                 .expect("Could not write empty line to file");
-    //         }
-    //     })
+    html.write_all(default_content.as_bytes()).unwrap();
 }
 
 //Prints Help information
