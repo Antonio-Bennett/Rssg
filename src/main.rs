@@ -1,6 +1,6 @@
 use std::{
     env,
-    fs::{self, copy, DirEntry, OpenOptions},
+    fs::{self, OpenOptions},
     io::{Result, Write},
     path::Path,
     process,
@@ -20,10 +20,10 @@ fn main() -> Result<()> {
     match &args[0] as &str {
         "-i" | "--input" if run(&args[1..]).is_ok() => {
             if Path::new("./dist/").is_dir() {
-                fs::remove_dir_all("./dist/").unwrap();
+                fs::remove_dir_all("./dist/")?;
             }
 
-            fs::create_dir("./dist").unwrap();
+            fs::create_dir("./dist")?;
             args.into_iter().skip(1).for_each(|file| {
                 let mut html = String::new();
                 if Path::new(&file).is_dir() {
@@ -47,7 +47,9 @@ fn main() -> Result<()> {
                 } else {
                     let new_location = "./dist/".to_owned() + &html;
                     html = file.strip_suffix(".txt").unwrap().to_owned() + ".html";
-                    fs::copy(&html, new_location).unwrap();
+                    html = format!("\"{}\"", &html);
+                    println!("{}", r#""Silver Blaze.html""#);
+                    fs::copy(r#""Silver Blaze.html""#, new_location).unwrap();
                     fs::remove_file(html).unwrap();
                 }
             })
