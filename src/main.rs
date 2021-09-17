@@ -45,11 +45,9 @@ fn main() -> Result<()> {
                         fs::remove_file(html).unwrap();
                     }
                 } else {
-                    let new_location = "./dist/".to_owned() + &html;
                     html = file.strip_suffix(".txt").unwrap().to_owned() + ".html";
-                    html = format!("\"{}\"", &html);
-                    println!("{}", r#""Silver Blaze.html""#);
-                    fs::copy(r#""Silver Blaze.html""#, new_location).unwrap();
+                    let new_location = "./dist/".to_owned() + &html;
+                    fs::copy(&html, new_location).unwrap();
                     fs::remove_file(html).unwrap();
                 }
             })
