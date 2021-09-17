@@ -8,9 +8,9 @@ use std::{
 
 fn main() -> Result<()> {
     //Do not run the program until input is specified
-    if env::args().count() == 1 {
+    if env::args().count() == 2 {
         println!("Please enter input. Type rssg --help or -h for more information.");
-        process::exit(1);
+        process::exit(0);
     }
 
     //Arguments passed to program
@@ -56,7 +56,7 @@ fn main() -> Result<()> {
         "-v" | "--version" => println!("rssg current version: {}", env!("CARGO_PKG_VERSION")),
         _ => {
             println!("Please enter a valid flag. Type rssg --help or -h for more information.");
-            process::exit(1)
+            process::exit(0)
         }
     }
 
