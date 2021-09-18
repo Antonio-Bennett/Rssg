@@ -2,19 +2,25 @@ use crate::parsing::input::{finalize_dist, read_text};
 use std::{env, error::Error, process};
 
 pub fn read_arguments() -> Result<(), Box<dyn Error>> {
-    //Do not run the program until input is specified
-    if env::args().count() == 2 {
-        println!("Please enter input. Type rssg --help or -h for more information.");
-        process::exit(0);
-    }
-
     //Arguments passed to program
     let args: Vec<String> = env::args().into_iter().skip(1).collect();
 
     //Matches passed flag and does appropiate action
     match &args[0] as &str {
-        "-i" | "--input" if read_text(&args[1..]).is_ok() => finalize_dist(args), //Pass args starting at 1 since 0 is the flag
-        "-h" | "--help" => help_info(),                                           //Prints help info
+        "-i" | "--input" => {
+            //Do not run the program until input is specified check is here because -v is also arg
+            //count of 2
+            if env::args().count() == 2 {
+                println!("Please enter input. Type rssg --help or -h for more information.");
+                process::exit(0);
+            }
+            if read_text(&args[1..]).is_ok() {
+                finalize_dist(args)
+            } else {
+                Err("Could not read files".into())
+            }
+        } //Pass args starting at 1 since 0 is the flag
+        "-h" | "--help" => help_info(), //Prints help info
         "-v" | "--version" => {
             //Version num based on toml
             println!("rssg current version: {}", env!("CARGO_PKG_VERSION"));
