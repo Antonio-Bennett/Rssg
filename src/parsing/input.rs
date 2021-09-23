@@ -16,11 +16,20 @@ pub fn finalize_dist(args: Vec<String>) -> Result<(), Box<dyn Error>> {
             recursive(file.into());
         } else {
             //Otherwise basic file movement to dist
-            let html = file.strip_suffix(".txt").unwrap().to_owned() + ".html";
-            let new_location = "./dist/".to_owned() + &html;
-            fs::copy(&html, new_location).unwrap();
-            fs::remove_file(html).unwrap();
+            //Quick Check to see if file extension is .txt or .md
+            if file.contains(".txt") {
+                let html = file.strip_suffix(".txt").unwrap().to_owned() + ".html";
+                let new_location = "./dist/".to_owned() + &html;
+                fs::copy(&html, new_location).unwrap();
+                fs::remove_file(html).unwrap();
+            } else {
+                let md = file.strip_suffix(".md").unwrap().to_owned() + ".html";
+                let new_location = "./dist/".to_owned() + &md;
+                fs::copy(&md, new_location).unwrap();
+                fs::remove_file(md).unwrap();
+            }
         }
+
     });
 
     Ok(())
