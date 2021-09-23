@@ -1,6 +1,6 @@
 ### What is this project?
 
-This is a simple [Static Site Generator](https://www.cloudflare.com/en-ca/learning/performance/static-site-generator/#:~:text=A%20static%20site%20generator%20is,and%20a%20set%20of%20templates.&text=Static%20site%20generators%20are%20an,generating%20webpages%2C%20and%20implementing%20templates.) that converts txt files to html 
+This is a simple [Static Site Generator](https://www.cloudflare.com/en-ca/learning/performance/static-site-generator/#:~:text=A%20static%20site%20generator%20is,and%20a%20set%20of%20templates.&text=Static%20site%20generators%20are%20an,generating%20webpages%2C%20and%20implementing%20templates.) that converts txt and md files to html 
 
 ## Sample Site
 [Rssg Sample](https://antonio-bennett.github.io/)
@@ -24,7 +24,9 @@ By using the -h or --help flag user is able to see help information
 
 ### Input
 
-The program accepts inputs from the user using the -i or --input flag. Acceptable inputs are files and or folders
+The program accepts inputs from the user using the -i or --input flag. Acceptable inputs are files and or folders. The program allows for the input for txt and md file extensions.
+
+Currently, the only working Markdown syntax is bold.
 
 ### Output
 Output is stored in a current directory in folder named dist
