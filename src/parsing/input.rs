@@ -172,10 +172,19 @@ fn process(file: &mut String, filename: &str) {
         vec_lines.into_iter().for_each(|curr_line| {
             if !curr_line.is_empty() {
                 if firstline {
-                    line = "\t<p>".to_owned() + curr_line;
-                    firstline = false;
+                    if curr_line.contains("**") {
+                        line = "\t<p><b>".to_owned() + curr_line + "</b>";
+                        firstline = false;
+                    } else {
+                        line = "\t<p>".to_owned() + curr_line;
+                        firstline = false;
+                    }
                 } else {
-                    line = "\n\t".to_owned() + curr_line;
+                    if curr_line.contains("**") {
+                        line = "\n\t<b>".to_owned() + curr_line + "</b>";
+                    } else {
+                        line = "\n\t".to_owned() + curr_line;
+                    }
                 }
                 html.write_all(line.as_bytes())
                     .expect("Could not write to file");
