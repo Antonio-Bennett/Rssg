@@ -28,9 +28,10 @@ By using the -h or --help flag `cargo r -- -h`  the user is able to see help inf
 The program accepts inputs from the user using the -i or --input flag. Acceptable inputs are files and or folders
 ```rust
 cargo r -- -i example.txt
+cargo r -- -i example.md
 cargo r -- -i exampleFolder/
 ```
-
+Currently, the only working Markdown syntax is header1 "#".
 ### Output
 
 Output is stored in a current directory in folder named dist

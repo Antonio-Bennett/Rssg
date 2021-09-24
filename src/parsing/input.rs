@@ -82,6 +82,9 @@ fn process(file: &mut String, filename: &str) {
     //This will track if I need to create a new paragraph tag for soft newlines
     let mut firstline = true;
 
+    //This will tell us if the line is a header in md syntax
+    let mut is_header = false;
+
     //Sets the rules for the html files created so that lines can be appended
     let mut html = OpenOptions::new()
         .write(true)
@@ -106,7 +109,13 @@ fn process(file: &mut String, filename: &str) {
     //processing
     if vec_lines[1].is_empty() && vec_lines[2].is_empty() && !vec_lines[0].is_empty() {
         //Write title
-        let default_content = &("\n\t<title>".to_owned() + vec_lines[0] + "</title>");
+        let mut title_name = vec_lines[0];
+        //Check to see if title contains bold markdown syntax
+        if vec_lines[0].contains("# ") {
+            title_name = title_name.strip_prefix("# ").unwrap();
+        }
+
+        let default_content = &("\n\t<title>".to_owned() + title_name + "</title>");
         html.write_all(default_content.as_bytes()).unwrap();
 
         let default_content = "
@@ -116,18 +125,25 @@ fn process(file: &mut String, filename: &str) {
 
         html.write_all(default_content.as_bytes()).unwrap();
         //H1 with the title
-        html.write_all(("\t<h1>".to_owned() + vec_lines[0] + "</h1>\n\n").as_bytes())
-            .unwrap();
-
+        html.write_all(("\t<h1>".to_owned() + title_name + "</h1>\n\n").as_bytes())
+        .unwrap();
+        
         //Skip first 3 lines as it is title info
-        vec_lines.into_iter().skip(3).for_each(|curr_line| {
+        vec_lines.into_iter().skip(3).for_each(|mut curr_line| {
             //If the line isn't empty it is part of a p tag
             if !curr_line.is_empty() {
                 //Checks if it is the first line of paragraph
                 if firstline {
-                    //If so the we can print the opening tag and set firstline as false
-                    line = "\t<p>".to_owned() + curr_line;
-                    firstline = false;
+                    if curr_line.contains("# ") {
+                        curr_line = curr_line.strip_prefix("# ").unwrap();
+                        is_header = true;
+                        line = "\t<h1>".to_owned() + curr_line + "</h1>\n\n";
+                    } else {
+                        //If so the we can print the opening tag and set firstline as false
+                        line = "\t<p>".to_owned() + curr_line;
+                        firstline = false;
+                        is_header = false;
+                    }
                 } else {
                     //We can then print other lines of the paragraph as regular lines
                     line = "\n\t".to_owned() + curr_line;
@@ -138,8 +154,11 @@ fn process(file: &mut String, filename: &str) {
                 //This means there was a hard newline since line is empty so we print the closing p tag
                 //for prev paragraph and set firstline as true for the next paragraph
                 firstline = true;
-                html.write_all("</p>\n\n".as_bytes())
+                
+                if !is_header {
+                    html.write_all("</p>\n\n".as_bytes())
                     .expect("Could not write to file");
+                }
             }
         });
     } else {
@@ -156,28 +175,49 @@ fn process(file: &mut String, filename: &str) {
 
         html.write_all(default_content.as_bytes()).unwrap();
 
-        vec_lines.into_iter().for_each(|curr_line| {
+        vec_lines.into_iter().for_each(|mut curr_line| {
             if !curr_line.is_empty() {
+                //Checks if it is the first line of paragraph
                 if firstline {
-                    line = "\t<p>".to_owned() + curr_line;
-                    firstline = false;
+                    if curr_line.contains("# ") {
+                        curr_line = curr_line.strip_prefix("# ").unwrap();
+                        is_header = true;
+                        line = "\t<h1>".to_owned() + curr_line + "</h1>\n\n";
+                    } else {
+                        //If so the we can print the opening tag and set firstline as false
+                        line = "\t<p>".to_owned() + curr_line;
+                        firstline = false;
+                        is_header = false;
+                    }
                 } else {
+                    //We can then print other lines of the paragraph as regular lines
                     line = "\n\t".to_owned() + curr_line;
                 }
                 html.write_all(line.as_bytes())
                     .expect("Could not write to file");
             } else {
+                //This means there was a hard newline since line is empty so we print the closing p tag
+                //for prev paragraph and set firstline as true for the next paragraph
                 firstline = true;
-                html.write_all("</p>\n\n".as_bytes())
+                if !is_header {
+                    html.write_all("</p>\n\n".as_bytes())
                     .expect("Could not write to file");
+                }
             }
         });
     }
-
-    //Close the very last p tag
-    let default_content = "</p>
+    let default_content;
+    if !is_header {
+        //Close the very last p tag
+        default_content = "</p>
 </body>
 </html>";
+    } else {
+        default_content = "
+</body>
+</html>"
+    }
+    
 
     html.write_all(default_content.as_bytes()).unwrap();
 }
