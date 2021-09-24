@@ -7,7 +7,11 @@ use std::{
 
 pub fn finalize_dist(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     //Overwrite dist dir if already exists or create
-    fs::create_dir_all("./dist")?;
+    if Path::new("./dist").exists() {
+        fs::remove_dir_all("./dist").unwrap();
+    }
+
+    fs::create_dir("./dist")?;
 
     //Goes through each arg of input
     args.into_iter().skip(1).for_each(|file| {
@@ -16,18 +20,10 @@ pub fn finalize_dist(args: Vec<String>) -> Result<(), Box<dyn Error>> {
             recursive(file.into());
         } else {
             //Otherwise basic file movement to dist
-            //Quick Check to see if file extension is .txt or .md
-            if file.contains(".txt") {
-                let html = file.strip_suffix(".txt").unwrap().to_owned() + ".html";
-                let new_location = "./dist/".to_owned() + &html;
-                fs::copy(&html, new_location).unwrap();
-                fs::remove_file(html).unwrap();
-            } else {
-                let md = file.strip_suffix(".md").unwrap().to_owned() + ".html";
-                let new_location = "./dist/".to_owned() + &md;
-                fs::copy(&md, new_location).unwrap();
-                fs::remove_file(md).unwrap();
-            }
+            let html = file.strip_suffix(".txt").unwrap().to_owned() + ".html";
+            let new_location = "./dist/".to_owned() + &html;
+            fs::copy(&html, new_location).unwrap();
+            fs::remove_file(html).unwrap();
         }
     });
 
@@ -75,16 +71,8 @@ fn visit_dirs(dir: &Path, cb: &dyn Fn(&mut String, &str)) -> Result<(), Box<dyn 
 }
 
 fn process(file: &mut String, filename: &str) {
-    //Create name array containing filname string array
-    let mut name = filename.repeat(1);
-    
-    //Check to see if the filename contains extension .txt or .md
-    if filename.contains(".txt") {
-        //Create final file name: test.txt -> test.html
-        name = name.replace(".txt", ".html");
-    } else if filename.contains(".md") {
-        name = name.replace(".md", ".html");
-    }
+    //Create final file name: test.txt -> test.html
+    let mut name = filename.replace(".txt", ".html");
 
     //When doing nested subdirectories a / would left from the subirectory name ex. /test.html
     if name.starts_with('/') {
