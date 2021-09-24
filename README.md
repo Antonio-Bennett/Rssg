@@ -26,7 +26,7 @@ By using the -h or --help flag user is able to see help information
 
 The program accepts inputs from the user using the -i or --input flag. Acceptable inputs are files and or folders. The program allows for the input for txt and md file extensions.
 
-Currently, the only working Markdown syntax is bold.
+Currently, the only working Markdown syntax is header1 "#".
 
 ### Output
 Output is stored in a current directory in folder named dist
