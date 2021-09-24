@@ -7,7 +7,11 @@ use std::{
 
 pub fn finalize_dist(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     //Overwrite dist dir if already exists or create
-    fs::create_dir_all("./dist")?;
+    if Path::new("./dist").exists() {
+        fs::remove_dir_all("./dist").unwrap();
+    }
+
+    fs::create_dir("./dist")?;
 
     //Goes through each arg of input
     args.into_iter().skip(1).for_each(|file| {
