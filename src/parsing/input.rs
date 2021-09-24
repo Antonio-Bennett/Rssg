@@ -79,8 +79,16 @@ fn visit_dirs(dir: &Path, cb: &dyn Fn(&mut String, &str)) -> Result<(), Box<dyn 
 }
 
 fn process(file: &mut String, filename: &str) {
-    //Create final file name: test.txt -> test.html
-    let mut name = filename.replace(".txt", ".html");
+    //Create name array containing filname string array
+    let mut name = filename.repeat(1);
+    
+    //Check to see if the filename contains extension .txt or .md
+    if filename.contains(".txt") {
+        //Create final file name: test.txt -> test.html
+        name = name.replace(".txt", ".html");
+    } else if filename.contains(".md") {
+        name = name.replace(".md", ".html");
+    }
 
     //When doing nested subdirectories a / would left from the subirectory name ex. /test.html
     if name.starts_with('/') {
