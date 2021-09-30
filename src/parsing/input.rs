@@ -80,8 +80,8 @@ fn visit_dirs(dir: &Path, cb: &dyn Fn(&mut String, &str)) -> Result<(), Box<dyn 
 
 fn process(file: &mut String, filename: &str) {
     //Create name array containing filname string array
-    let mut name = filename.repeat(1);
-    
+    let mut name = filename.to_string();
+
     //Check to see if the filename contains extension .txt or .md
     if filename.contains(".txt") {
         //Create final file name: test.txt -> test.html
@@ -142,8 +142,8 @@ fn process(file: &mut String, filename: &str) {
         html.write_all(default_content.as_bytes()).unwrap();
         //H1 with the title
         html.write_all(("\t<h1>".to_owned() + title_name + "</h1>\n\n").as_bytes())
-        .unwrap();
-        
+            .unwrap();
+
         //Skip first 3 lines as it is title info
         vec_lines.into_iter().skip(3).for_each(|mut curr_line| {
             //If the line isn't empty it is part of a p tag
@@ -164,16 +164,47 @@ fn process(file: &mut String, filename: &str) {
                     //We can then print other lines of the paragraph as regular lines
                     line = "\n\t".to_owned() + curr_line;
                 }
+                if line.contains('`') {
+                    //get num of backticks to know if we should ignore the last one
+                    let num = line.chars().filter(|c| *c == '`').count();
+                    let mut open = true; //to switch between open and close tag of code
+
+                    //even amount so we can replace freely
+                    if num % 2 == 0 {
+                        for _ in 0..num {
+                            let x = line.find('`').unwrap();
+                            if open {
+                                line = line[0..x].to_owned() + "<code>" + &line[x + 1..];
+                                open = false;
+                            } else {
+                                line = line[0..x].to_owned() + "</code>" + &line[x + 1..];
+                                open = true;
+                            }
+                        }
+                    } else {
+                        //Replace all but the last odd backtick
+                        for _ in 1..num {
+                            let x = line.find('`').unwrap();
+                            if open {
+                                line = line[0..x].to_owned() + "<code>" + &line[x + 1..];
+                                open = false;
+                            } else {
+                                line = line[0..x].to_owned() + "</code>" + &line[x + 1..];
+                                open = true;
+                            }
+                        }
+                    }
+                }
                 html.write_all(line.as_bytes())
                     .expect("Could not write to file");
             } else {
                 //This means there was a hard newline since line is empty so we print the closing p tag
                 //for prev paragraph and set firstline as true for the next paragraph
                 firstline = true;
-                
+
                 if !is_header {
                     html.write_all("</p>\n\n".as_bytes())
-                    .expect("Could not write to file");
+                        .expect("Could not write to file");
                 }
             }
         });
@@ -209,6 +240,37 @@ fn process(file: &mut String, filename: &str) {
                     //We can then print other lines of the paragraph as regular lines
                     line = "\n\t".to_owned() + curr_line;
                 }
+                if line.contains('`') {
+                    //get num of backticks to know if we should ignore the last one
+                    let num = line.chars().filter(|c| *c == '`').count();
+                    let mut open = true; //to switch between open and close tag of code
+
+                    //even amount so we can replace freely
+                    if num % 2 == 0 {
+                        for _ in 0..num {
+                            let x = line.find('`').unwrap();
+                            if open {
+                                line = line[0..x].to_owned() + "<code>" + &line[x + 1..];
+                                open = false;
+                            } else {
+                                line = line[0..x].to_owned() + "</code>" + &line[x + 1..];
+                                open = true;
+                            }
+                        }
+                    } else {
+                        //Replace all but the last odd backtick
+                        for _ in 1..num {
+                            let x = line.find('`').unwrap();
+                            if open {
+                                line = line[0..x].to_owned() + "<code>" + &line[x + 1..];
+                                open = false;
+                            } else {
+                                line = line[0..x].to_owned() + "</code>" + &line[x + 1..];
+                                open = true;
+                            }
+                        }
+                    }
+                }
                 html.write_all(line.as_bytes())
                     .expect("Could not write to file");
             } else {
@@ -217,7 +279,7 @@ fn process(file: &mut String, filename: &str) {
                 firstline = true;
                 if !is_header {
                     html.write_all("</p>\n\n".as_bytes())
-                    .expect("Could not write to file");
+                        .expect("Could not write to file");
                 }
             }
         });
@@ -233,7 +295,6 @@ fn process(file: &mut String, filename: &str) {
 </body>
 </html>"
     }
-    
 
     html.write_all(default_content.as_bytes()).unwrap();
 }

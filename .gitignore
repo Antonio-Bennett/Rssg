@@ -2,3 +2,5 @@
 /dist
 /testfolder/*
 ./*.html
+*.md
+*.txt
