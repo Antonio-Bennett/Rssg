@@ -112,6 +112,7 @@ fn process(file: &mut String, filename: &str) {
     //Collects all lines of txt file into vec of strings to iterate line by line
     let vec_lines: Vec<&str> = file.lines().into_iter().collect();
     let mut line = String::new();
+    let mut prev_tag = "";
 
     //Default content (content that is always the same) will be added throughout proccess
     let default_content = "<!doctype html>
@@ -154,19 +155,31 @@ fn process(file: &mut String, filename: &str) {
                         curr_line = curr_line.strip_prefix("# ").unwrap();
                         is_header = true;
                         line = "\t<h1>".to_owned() + curr_line + "</h1>\n\n";
+                        prev_tag = "<h1>";
                     } else {
                         //If so the we can print check for --- or print the opening tag and set firstline as false
                         if curr_line.trim() == "---" {
                             line = "\t<hr>".to_owned();
+                            prev_tag = "<hr>";
                         } else {
                             line = "\t<p>".to_owned() + curr_line;
+                            prev_tag = "<p>";
                         }
                         firstline = false;
                         is_header = false;
                     }
                 } else {
-                    //We can then print other lines of the paragraph as regular lines
-                    line = "\n\t".to_owned() + curr_line;
+                    //We can then print other lines of the paragraph as regular lines if prev tag was a paragraph
+                    if curr_line.trim() == "---" {
+                        if prev_tag == "<p>" {
+                            line = "</p>\n\n\t<hr>".to_owned();
+                        } else {
+                            line = "\n\n\t<hr>".to_owned();
+                        }
+                        prev_tag = "<hr>";
+                    } else {
+                        line = "\n\t".to_owned() + curr_line;
+                    }
                 }
                 html.write_all(line.as_bytes())
                     .expect("Could not write to file");
@@ -176,7 +189,7 @@ fn process(file: &mut String, filename: &str) {
                 firstline = true;
 
                 if !is_header {
-                    if line.starts_with("<p>") {
+                    if prev_tag == "<p>" {
                         html.write_all("</p>\n\n".as_bytes())
                             .expect("Could not write to file");
                     } else {
@@ -208,15 +221,31 @@ fn process(file: &mut String, filename: &str) {
                         curr_line = curr_line.strip_prefix("# ").unwrap();
                         is_header = true;
                         line = "\t<h1>".to_owned() + curr_line + "</h1>\n\n";
+                        prev_tag = "<h1>";
                     } else {
                         //If so the we can print the opening tag and set firstline as false
-                        line = "\t<p>".to_owned() + curr_line;
+                        if curr_line.trim() == "---" {
+                            line = "\t<hr>".to_owned();
+                            prev_tag = "<hr>";
+                        } else {
+                            line = "\t<p>".to_owned() + curr_line;
+                            prev_tag = "<p>";
+                        }
                         firstline = false;
                         is_header = false;
                     }
                 } else {
-                    //We can then print other lines of the paragraph as regular lines
-                    line = "\n\t".to_owned() + curr_line;
+                    //We can then print other lines of the paragraph as regular lines if prev tag was a paragraph
+                    if curr_line.trim() == "---" {
+                        if prev_tag == "<p>" {
+                            line = "</p>\n\n\t<hr>".to_owned();
+                        } else {
+                            line = "\n\n\t<hr>".to_owned();
+                        }
+                        prev_tag = "<hr>";
+                    } else {
+                        line = "\n\t".to_owned() + curr_line;
+                    }
                 }
                 html.write_all(line.as_bytes())
                     .expect("Could not write to file");
@@ -225,8 +254,13 @@ fn process(file: &mut String, filename: &str) {
                 //for prev paragraph and set firstline as true for the next paragraph
                 firstline = true;
                 if !is_header {
-                    html.write_all("</p>\n\n".as_bytes())
-                        .expect("Could not write to file");
+                    if prev_tag == "<p>" {
+                        html.write_all("</p>\n\n".as_bytes())
+                            .expect("Could not write to file");
+                    } else {
+                        html.write_all("\n\n".as_bytes())
+                            .expect("Could not write to file");
+                    }
                 }
             }
         });
