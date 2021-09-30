@@ -181,6 +181,37 @@ fn process(file: &mut String, filename: &str) {
                         line = "\n\t".to_owned() + curr_line;
                     }
                 }
+                if line.contains('`') {
+                    //get num of backticks to know if we should ignore the last one
+                    let num = line.chars().filter(|c| *c == '`').count();
+                    let mut open = true; //to switch between open and close tag of code
+
+                    //even amount so we can replace freely
+                    if num % 2 == 0 {
+                        for _ in 0..num {
+                            let x = line.find('`').unwrap();
+                            if open {
+                                line = line[0..x].to_owned() + "<code>" + &line[x + 1..];
+                                open = false;
+                            } else {
+                                line = line[0..x].to_owned() + "</code>" + &line[x + 1..];
+                                open = true;
+                            }
+                        }
+                    } else {
+                        //Replace all but the last odd backtick
+                        for _ in 1..num {
+                            let x = line.find('`').unwrap();
+                            if open {
+                                line = line[0..x].to_owned() + "<code>" + &line[x + 1..];
+                                open = false;
+                            } else {
+                                line = line[0..x].to_owned() + "</code>" + &line[x + 1..];
+                                open = true;
+                            }
+                        }
+                    }
+                }
                 html.write_all(line.as_bytes())
                     .expect("Could not write to file");
             } else {
@@ -189,13 +220,8 @@ fn process(file: &mut String, filename: &str) {
                 firstline = true;
 
                 if !is_header {
-                    if prev_tag == "<p>" {
-                        html.write_all("</p>\n\n".as_bytes())
-                            .expect("Could not write to file");
-                    } else {
-                        html.write_all("\n\n".as_bytes())
-                            .expect("Could not write to file");
-                    }
+                    html.write_all("</p>\n\n".as_bytes())
+                        .expect("Could not write to file");
                 }
             }
         });
@@ -245,6 +271,37 @@ fn process(file: &mut String, filename: &str) {
                         prev_tag = "<hr>";
                     } else {
                         line = "\n\t".to_owned() + curr_line;
+                    }
+                }
+                if line.contains('`') {
+                    //get num of backticks to know if we should ignore the last one
+                    let num = line.chars().filter(|c| *c == '`').count();
+                    let mut open = true; //to switch between open and close tag of code
+
+                    //even amount so we can replace freely
+                    if num % 2 == 0 {
+                        for _ in 0..num {
+                            let x = line.find('`').unwrap();
+                            if open {
+                                line = line[0..x].to_owned() + "<code>" + &line[x + 1..];
+                                open = false;
+                            } else {
+                                line = line[0..x].to_owned() + "</code>" + &line[x + 1..];
+                                open = true;
+                            }
+                        }
+                    } else {
+                        //Replace all but the last odd backtick
+                        for _ in 1..num {
+                            let x = line.find('`').unwrap();
+                            if open {
+                                line = line[0..x].to_owned() + "<code>" + &line[x + 1..];
+                                open = false;
+                            } else {
+                                line = line[0..x].to_owned() + "</code>" + &line[x + 1..];
+                                open = true;
+                            }
+                        }
                     }
                 }
                 html.write_all(line.as_bytes())
