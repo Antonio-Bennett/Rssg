@@ -1,4 +1,6 @@
 /target
 /dist
 /testfolder/*
-./*.html
+*.html
+*.md
+*.txt
