@@ -220,8 +220,13 @@ fn process(file: &mut String, filename: &str) {
                 firstline = true;
 
                 if !is_header {
-                    html.write_all("</p>\n\n".as_bytes())
-                        .expect("Could not write to file");
+                    if prev_tag == "<p>" {
+                        html.write_all("</p>\n\n".as_bytes())
+                            .expect("Could not write to file");
+                    } else {
+                        html.write_all("\n\n".as_bytes())
+                            .expect("Could not write to file");
+                    }
                 }
             }
         });
