@@ -1,5 +1,5 @@
-use crate::parsing::input::{finalize_dist, read_text};
-use std::{env, error::Error, process};
+use crate::parsing::input::{finalize_dist, process_arguments};
+use std::{env, error::Error};
 
 pub fn read_arguments() -> Result<(), Box<dyn Error>> {
     //Arguments passed to program
@@ -11,10 +11,12 @@ pub fn read_arguments() -> Result<(), Box<dyn Error>> {
             //Do not run the program until input is specified check is here because -v is also arg
             //count of 2
             if env::args().count() == 2 {
-                println!("Please enter input. Type rssg --help or -h for more information.");
-                process::exit(0);
+                return Err(
+                    "Please enter input. Type rssg --help or -h for more information.".into(),
+                );
             }
-            if read_text(&args[1..]).is_ok() {
+
+            if process_arguments(&args[1..]).is_ok() {
                 finalize_dist(args)
             } else {
                 Err("Could not read files".into())
@@ -28,8 +30,7 @@ pub fn read_arguments() -> Result<(), Box<dyn Error>> {
         }
         _ => {
             //No valid flag passed
-            println!("Please enter a valid flag. Type rssg --help or -h for more information.");
-            process::exit(0);
+            Err("Please enter a valid flag. Type rssg --help or -h for more information.".into())
         }
     }
 }
