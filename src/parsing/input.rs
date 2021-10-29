@@ -5,6 +5,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use comrak::{markdown_to_html, ComrakOptions};
+
 pub fn finalize_dist(args: Vec<String>) -> Result<(), Box<dyn Error>> {
     //Overwrite dist dir if already exists or create
     if Path::new("./dist").exists() {
@@ -101,9 +103,6 @@ fn process(file: &mut String, filename: &str) {
     //This will track if I need to create a new paragraph tag for soft newlines
     let mut firstline = true;
 
-    //This will tell us if the line is a header in md syntax
-    let mut is_header = false;
-
     //Sets the rules for the html files created so that lines can be appended
     let mut html = OpenOptions::new()
         .write(true)
@@ -132,7 +131,6 @@ fn process(file: &mut String, filename: &str) {
             vec_lines,
             &mut html,
             &mut firstline,
-            &mut is_header,
             &mut line,
             prev_tag,
             ext,
@@ -144,7 +142,6 @@ fn process(file: &mut String, filename: &str) {
             vec_lines,
             &mut html,
             &mut firstline,
-            &mut is_header,
             &mut line,
             prev_tag,
             ext,
@@ -152,15 +149,14 @@ fn process(file: &mut String, filename: &str) {
     }
 
     let default_content;
-    if !is_header {
-        //Close the very last p tag
+    if ext == "txt" {
         default_content = "</p>
 </body>
 </html>";
     } else {
         default_content = "
 </body>
-</html>"
+</html>";
     }
 
     html.write_all(default_content.as_bytes()).unwrap();
@@ -206,13 +202,13 @@ fn process_file_with_title(
     vec_lines: Vec<&str>,
     html: &mut File,
     firstline: &mut bool,
-    is_header: &mut bool,
     line: &mut String,
     mut prev_tag: &str,
     ext: &str,
 ) {
     //Write title
     let mut title_name = vec_lines[0];
+
     //Check to see if title contains bold markdown syntax
     if vec_lines[0].contains("# ") {
         title_name = title_name.strip_prefix("# ").unwrap();
@@ -231,73 +227,30 @@ fn process_file_with_title(
     html.write_all(("\t<h1>".to_owned() + title_name + "</h1>\n\n").as_bytes())
         .unwrap();
 
+    if ext == "md" {
+        let file: Vec<&str> = vec_lines.into_iter().skip(3).collect();
+        let file = file.join("\n");
+        let file = markdown_to_html(&file, &ComrakOptions::default());
+        html.write_all(file.as_bytes())
+            .expect("Could not write markdown");
+        return;
+    }
+
     //Skip first 3 lines as it is title info
-    vec_lines.into_iter().skip(3).for_each(|mut curr_line| {
+    vec_lines.into_iter().skip(3).for_each(|curr_line| {
         //If the line isn't empty it is part of a p tag
         if !curr_line.is_empty() {
             //Checks if it is the first line of paragraph
             if *firstline {
-                if curr_line.contains("# ") {
-                    curr_line = curr_line.strip_prefix("# ").unwrap();
-                    *is_header = true;
-                    *line = "\t<h1>".to_owned() + curr_line + "</h1>\n\n";
-                    prev_tag = "<h1>";
-                } else {
-                    //If so the we can print check for --- or print the opening tag and set firstline as false
-                    if curr_line.trim() == "---" && ext == "md" {
-                        *line = "\t<hr>".to_owned();
-                        prev_tag = "<hr>";
-                    } else {
-                        *line = "\t<p>".to_owned() + curr_line;
-                        prev_tag = "<p>";
-                    }
-                    *firstline = false;
-                    *is_header = false;
-                }
+                //If so the we can print check for --- or print the opening tag and set firstline as false
+                *line = "\t<p>".to_owned() + curr_line;
+                prev_tag = "<p>";
+                *firstline = false;
             } else {
                 //We can then print other lines of the paragraph as regular lines if prev tag was a paragraph
-                if curr_line.trim() == "---" && ext == "md" {
-                    if prev_tag == "<p>" {
-                        *line = "</p>\n\n\t<hr>".to_owned();
-                    } else {
-                        *line = "\n\n\t<hr>".to_owned();
-                    }
-                    prev_tag = "<hr>";
-                } else {
-                    *line = "\n\t".to_owned() + curr_line;
-                }
+                *line = "\n\t".to_owned() + curr_line;
             }
-            if line.contains('`') && ext == "md" {
-                //get num of backticks to know if we should ignore the last one
-                let num = line.chars().filter(|c| *c == '`').count();
-                let mut open = true; //to switch between open and close tag of code
 
-                //even amount so we can replace freely
-                if num % 2 == 0 {
-                    for _ in 0..num {
-                        let x = line.find('`').unwrap();
-                        if open {
-                            *line = line[0..x].to_owned() + "<code>" + &line[x + 1..];
-                            open = false;
-                        } else {
-                            *line = line[0..x].to_owned() + "</code>" + &line[x + 1..];
-                            open = true;
-                        }
-                    }
-                } else {
-                    //Replace all but the last odd backtick
-                    for _ in 1..num {
-                        let x = line.find('`').unwrap();
-                        if open {
-                            *line = line[0..x].to_owned() + "<code>" + &line[x + 1..];
-                            open = false;
-                        } else {
-                            *line = line[0..x].to_owned() + "</code>" + &line[x + 1..];
-                            open = true;
-                        }
-                    }
-                }
-            }
             html.write_all(line.as_bytes())
                 .expect("Could not write to file");
         } else {
@@ -305,14 +258,12 @@ fn process_file_with_title(
             //for prev paragraph and set firstline as true for the next paragraph
             *firstline = true;
 
-            if !*is_header {
-                if prev_tag == "<p>" {
-                    html.write_all("</p>\n\n".as_bytes())
-                        .expect("Could not write to file");
-                } else {
-                    html.write_all("\n\n".as_bytes())
-                        .expect("Could not write to file");
-                }
+            if prev_tag == "<p>" {
+                html.write_all("</p>\n\n".as_bytes())
+                    .expect("Could not write to file");
+            } else {
+                html.write_all("\n\n".as_bytes())
+                    .expect("Could not write to file");
             }
         }
     });
@@ -324,7 +275,6 @@ fn process_file_with_no_title(
     vec_lines: Vec<&str>,
     html: &mut File,
     firstline: &mut bool,
-    is_header: &mut bool,
     line: &mut String,
     mut prev_tag: &str,
     ext: &str,
@@ -342,85 +292,40 @@ fn process_file_with_no_title(
 
     html.write_all(default_content.as_bytes()).unwrap();
 
-    vec_lines.into_iter().for_each(|mut curr_line| {
+    if ext == "md" {
+        let file: Vec<&str> = vec_lines.into_iter().collect();
+        let file = file.join("\n");
+        let file = markdown_to_html(&file, &ComrakOptions::default());
+        html.write_all(file.as_bytes())
+            .expect("Could not write markdown");
+        return;
+    }
+
+    vec_lines.into_iter().for_each(|curr_line| {
         if !curr_line.is_empty() {
             //Checks if it is the first line of paragraph
             if *firstline {
-                if curr_line.contains("# ") {
-                    curr_line = curr_line.strip_prefix("# ").unwrap();
-                    *is_header = true;
-                    *line = "\t<h1>".to_owned() + curr_line + "</h1>\n\n";
-                    prev_tag = "<h1>";
-                } else {
-                    //If so the we can print the opening tag and set firstline as false
-                    if curr_line.trim() == "---" && ext == "md" {
-                        *line = "\t<hr>".to_owned();
-                        prev_tag = "<hr>";
-                    } else {
-                        *line = "\t<p>".to_owned() + curr_line;
-                        prev_tag = "<p>";
-                    }
-                    *firstline = false;
-                    *is_header = false;
-                }
+                //If so the we can print the opening tag and set firstline as false
+                *line = "\t<p>".to_owned() + curr_line;
+                prev_tag = "<p>";
+                *firstline = false;
             } else {
                 //We can then print other lines of the paragraph as regular lines if prev tag was a paragraph
-                if curr_line.trim() == "---" && ext == "md" {
-                    if prev_tag == "<p>" {
-                        *line = "</p>\n\n\t<hr>".to_owned();
-                    } else {
-                        *line = "\n\n\t<hr>".to_owned();
-                    }
-                    prev_tag = "<hr>";
-                } else {
-                    *line = "\n\t".to_owned() + curr_line;
-                }
+                *line = "\n\t".to_owned() + curr_line;
             }
-            if line.contains('`') && ext == "md" {
-                //get num of backticks to know if we should ignore the last one
-                let num = line.chars().filter(|c| *c == '`').count();
-                let mut open = true; //to switch between open and close tag of code
 
-                //even amount so we can replace freely
-                if num % 2 == 0 {
-                    for _ in 0..num {
-                        let x = line.find('`').unwrap();
-                        if open {
-                            *line = line[0..x].to_owned() + "<code>" + &line[x + 1..];
-                            open = false;
-                        } else {
-                            *line = line[0..x].to_owned() + "</code>" + &line[x + 1..];
-                            open = true;
-                        }
-                    }
-                } else {
-                    //Replace all but the last odd backtick
-                    for _ in 1..num {
-                        let x = line.find('`').unwrap();
-                        if open {
-                            *line = line[0..x].to_owned() + "<code>" + &line[x + 1..];
-                            open = false;
-                        } else {
-                            *line = line[0..x].to_owned() + "</code>" + &line[x + 1..];
-                            open = true;
-                        }
-                    }
-                }
-            }
             html.write_all(line.as_bytes())
                 .expect("Could not write to file");
         } else {
             //This means there was a hard newline since line is empty so we print the closing p tag
             //for prev paragraph and set firstline as true for the next paragraph
             *firstline = true;
-            if !*is_header {
-                if prev_tag == "<p>" {
-                    html.write_all("</p>\n\n".as_bytes())
-                        .expect("Could not write to file");
-                } else {
-                    html.write_all("\n\n".as_bytes())
-                        .expect("Could not write to file");
-                }
+            if prev_tag == "<p>" {
+                html.write_all("</p>\n\n".as_bytes())
+                    .expect("Could not write to file");
+            } else {
+                html.write_all("\n\n".as_bytes())
+                    .expect("Could not write to file");
             }
         }
     });
