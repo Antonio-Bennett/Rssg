@@ -4,14 +4,9 @@ This is a simple [Static Site Generator](https://www.cloudflare.com/en-ca/learni
 
 ## Sample Site
 
-[Rssg Sample](https://antonio-bennett.github.io/)
+[Rssg Sample](https://antonio-bennett.github.io/rssg)
 
-# How to Install
-
-- Download Rust from [Official Website](https://www.rust-lang.org/)
-- Clone this repo
-- Create sample text files or sample folder holding text files or both
-- Build and run help using cargo r -- -h for usage or look below
+To contribute view [CONTRIBUTING](CONTRIBUTING.md)
 
 # Features
 
@@ -21,17 +16,20 @@ By using the -v or --version flag `cargo r -- -v` the user is able to see the ve
 
 ### Help
 
-By using the -h or --help flag `cargo r -- -h`  the user is able to see help information
+By using the -h or --help flag `cargo r -- -h` the user is able to see help information
 
 ### Input
 
 The program accepts inputs from the user using the -i or --input flag. Acceptable inputs are files and or folders
+
 ```rust
 cargo r -- -i example.txt
 cargo r -- -i example.md
 cargo r -- -i exampleFolder/
 ```
+
 Currently, the only working Markdown syntax is header1 "#".
+
 ### Output
 
 Output is stored in a current directory in folder named dist
