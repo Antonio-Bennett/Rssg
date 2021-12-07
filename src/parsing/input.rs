@@ -127,14 +127,7 @@ fn process(file: &mut String, filename: &str) {
     //Checks if there is a title. If there is does proccessing based as such otherwise regular
     //processing
     if vec_lines[1].is_empty() && vec_lines[2].is_empty() && !vec_lines[0].is_empty() {
-        process_file_with_title(
-            vec_lines,
-            &mut html,
-            &mut firstline,
-            &mut line,
-            prev_tag,
-            ext,
-        );
+        process_file_with_title(vec_lines, &mut html, &mut firstline, &mut line, prev_tag, ext);
     } else {
         process_file_with_no_title(
             &name,
@@ -231,8 +224,7 @@ fn process_file_with_title(
         let file: Vec<&str> = vec_lines.into_iter().skip(3).collect();
         let file = file.join("\n");
         let file = markdown_to_html(&file, &ComrakOptions::default());
-        html.write_all(file.as_bytes())
-            .expect("Could not write markdown");
+        html.write_all(file.as_bytes()).expect("Could not write markdown");
         return;
     }
 
@@ -251,19 +243,16 @@ fn process_file_with_title(
                 *line = "\n\t".to_owned() + curr_line;
             }
 
-            html.write_all(line.as_bytes())
-                .expect("Could not write to file");
+            html.write_all(line.as_bytes()).expect("Could not write to file");
         } else {
             //This means there was a hard newline since line is empty so we print the closing p tag
             //for prev paragraph and set firstline as true for the next paragraph
             *firstline = true;
 
             if prev_tag == "<p>" {
-                html.write_all("</p>\n\n".as_bytes())
-                    .expect("Could not write to file");
+                html.write_all("</p>\n\n".as_bytes()).expect("Could not write to file");
             } else {
-                html.write_all("\n\n".as_bytes())
-                    .expect("Could not write to file");
+                html.write_all("\n\n".as_bytes()).expect("Could not write to file");
             }
         }
     });
@@ -296,8 +285,7 @@ fn process_file_with_no_title(
         let file: Vec<&str> = vec_lines.into_iter().collect();
         let file = file.join("\n");
         let file = markdown_to_html(&file, &ComrakOptions::default());
-        html.write_all(file.as_bytes())
-            .expect("Could not write markdown");
+        html.write_all(file.as_bytes()).expect("Could not write markdown");
         return;
     }
 
@@ -314,18 +302,15 @@ fn process_file_with_no_title(
                 *line = "\n\t".to_owned() + curr_line;
             }
 
-            html.write_all(line.as_bytes())
-                .expect("Could not write to file");
+            html.write_all(line.as_bytes()).expect("Could not write to file");
         } else {
             //This means there was a hard newline since line is empty so we print the closing p tag
             //for prev paragraph and set firstline as true for the next paragraph
             *firstline = true;
             if prev_tag == "<p>" {
-                html.write_all("</p>\n\n".as_bytes())
-                    .expect("Could not write to file");
+                html.write_all("</p>\n\n".as_bytes()).expect("Could not write to file");
             } else {
-                html.write_all("\n\n".as_bytes())
-                    .expect("Could not write to file");
+                html.write_all("\n\n".as_bytes()).expect("Could not write to file");
             }
         }
     });
